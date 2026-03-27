@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boids</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        html,
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-y: scroll;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            font-weight: 300;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 80%;
+            background-color: #ffffff;
+        }
+
+        .divider {
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            padding: 3px;
+            background-color: #FF671F;
+        }
+
+        .divider::before,
+        .divider::after {
+            flex: 1;
+            content: '';
+            padding: 3px;
+            background-color: black;
+            margin: 5px
+        }
+
+        .columns-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            column-gap: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .column {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #878787;
+            background-color: #FF671F;
+            font-size: 20px;
+            border-radius: 15px;
+
+        }
+
+        .justified-hfill {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .columns-container-debug {
+            width: 100%;
+            flex: 1;
+            display: none;
+        }
+
+        .column-debug {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #878787;
+            font-size: 20px;
+            background-color: #55ff00;
+        }
+
+
+        @media screen and (max-width: 900px) {
+            .divider {
+                font-size: 18px;
+            }
+
+            .canvas {
+                width: 100%;
+                height: 1400px;
+                overflow-y: scroll;
+            }
+
+            .columns-container {
+                width: 100%;
+                display: flex;
+                margin-bottom: 10px;
+            }
+
+
+            .column {
+                font-size: 18px;
+                padding: 5px;
+                align-items: center;
+            }
+        }
+
+
+
+        /* sliders for controls */
+        .slider {
+            width: 100%;
+            margin-bottom: 0px;
+        }
+    </style>
+    <!-- Load the Paper.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+    <!-- Define inlined PaperScript associate it with myCanvas -->
+    <script type="text/paperscript" src="./boids.js" canvas="myCanvas">
+    </script>
+</head>
+
+<body>
+    <!-- <h1>Boids</h1> -->
+    <div class="divider"> Boids: Collective Motion in Flocks </div>
+    <canvas id="myCanvas" resize></canvas>
+    <div class="columns-container">
+        <div class="column">
+            <strong>Separation:</strong> Boids don't want to be <em>too</em> close to other boids.
+            <!-- Separation Factor: <span id="separationOutput">0.05</span> -->
+            <div class="slidecontainer">
+                <input type="range" min="0.00" max="0.50" value="0.05" step="0.001" class="slider"
+                    id="separationSlider">
+            </div>
+            <div class="justified-hfill">
+                <em>No separation</em> <em>Strong separation</em>
+            </div>
+        </div>
+        <div class="column">
+            <strong>Alignment:</strong> Boids want to align their direction with nearby boids.
+            <!-- Alignment Factor: <span id="alignmentOutput">0.05</span> -->
+            <div class="slidecontainer">
+                <input type="range" min="0.00" max="0.50" value="0.05" step="0.001" class="slider" id="alignmentSlider">
+            </div>
+            <div class="justified-hfill">
+                <em>No alignment</em> <em>Strong alignment</em>
+            </div>
+        </div>
+        <div class="column">
+            <strong>Cohesion:</strong> Boids want to be in the middle of the flock.
+            <!-- Cohesion Factor: <span id="cohesionOutput">0.0005</span> -->
+            <div class="slidecontainer">
+                <input type="range" min="0.0" max="0.0050" value="0.0005" step="0.00001" class="slider"
+                    id="cohesionSlider">
+            </div>
+            <div class="justified-hfill">
+                <em>No cohesion</em> <em>Strong cohesion</em>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="columns-container-debug">
+        <div class="column-debug"><strong>Debug</strong><br>
+            <div>
+                <input type="checkbox" id="radiiBoxChecked" unchecked />
+                <label for="radiiBoxChecked">Visualize radii</label>
+            </div>
+            Protected Radius: <span id="protectedRangeOutput">0.05</span>
+            <div class="slidecontainer">
+                <input type="range" min="1.0" max="100.0" value="20.0" step="0.1" class="slider"
+                    id="protectedRangeSlider">
+            </div>
+            Visual Range: <span id="visualRangeOutput">0.05</span>
+            <div class="slidecontainer">
+                <input type="range" min="1.0" max="100.0" value="50.0" step="0.1" class="slider" id="visualRangeSlider">
+            </div>
+        </div>
+        <div class="column-debug"><strong>Debug</strong><br>
+            <div>
+                <input type="checkbox" id="turningBoxChecked" unchecked />
+                <label for="turningBoxChecked">Visualize turning margin</label>
+            </div>
+            Turning Margins: <span id="turningMarginOutput">250</span>
+            <div class="slidecontainer">
+                <input type="range" min="1.0" max="300.0" value="250.0" step="0.1" class="slider"
+                    id="turningMarginSlider">
+            </div>
+            Turning Factor: <span id="turningFactorOutput">0.2</span>
+            <div class="slidecontainer">
+                <input type="range" min="0.01" max="1.0" value="0.2" step="0.001" class="slider"
+                    id="turningFactorSlider">
+            </div>
+        </div>
+        <div class="column-debug"><strong>Debug</strong><br>
+            Min Speed : <span id="minSpeedOutput">3.0</span>
+            <div class="slidecontainer">
+                <input type="range" min="1.0" max="10.0" value="3.0" step="0.01" class="slider" id="minSpeedSlider">
+            </div>
+            Max Speed : <span id="maxSpeedOutput">6.0</span>
+            <div class="slidecontainer">
+                <input type="range" min="5.0" max="20.0" value="6.0" step="0.01" class="slider" id="maxSpeedSlider">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
