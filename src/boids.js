@@ -16,7 +16,7 @@ function buildBoid() {
     // move to random point in box
     myPath.position = new Point(xBounding, yBounding) * Point.random() + new Point(xBoxMin, yBoxMin);
     myPath.pivot = myPath.position;
-    myPath.scaling = 12;
+    myPath.scaling = 10;
     myPath.applyMatrix = false; // necessary to change rotation
 
     return myPath;
@@ -37,7 +37,7 @@ var yBounding = yBoxMax - yBoxMin;
 // placing boids
 var boids = [];
 var velocities = [];
-var nBoids = 128;
+var nBoids = 170;
 for (var i = 0; i < nBoids; i++) {
     var boid = buildBoid();
     boid.rotate(Math.random());
@@ -62,9 +62,13 @@ var maxSpeed = 9;
 var mouseAvoidanceRadius = 200;
 var mouseAvoidanceFactor = 1.0;
 var mousePoint = new Point(0, 0);
-var mouseAvoidancePath = new Path.Circle(mousePoint, mouseAvoidanceRadius / 4);
-mouseAvoidancePath.fillColor = 'red';
-mouseAvoidancePath.strokeColor = 'black'
+// var mouseAvoidancePath = new Path.Circle(mousePoint, mouseAvoidanceRadius / 4);
+var mouseAvoidanceTriangle = buildBoid();
+// mouseAvoidancePath.fillColor = 'red';
+// mouseAvoidancePath.strokeColor = 'black';
+mouseAvoidanceTriangle.fillColor = 'red';
+mouseAvoidanceTriangle.strokeColor = 'black';
+mouseAvoidanceTriangle.scaling = mouseAvoidanceRadius / 90;
 
 
 // simulation parameters from GUI
@@ -223,19 +227,23 @@ turningFactorSlider.oninput = function () {
 }
 
 // position updates
-
+var targetAngle = 0.0;
+var smoothAngle = 0.0;
 function onMouseMove(event) {
+    var oldPosition = mouseAvoidanceTriangle.position;
     mousePoint = event.point;
-    mouseAvoidancePath.position = mousePoint;
+
+    var delta = mousePoint - oldPosition;
+    if (delta.length > 5) {
+        targetAngle = delta.angle;
+    }
+    mouseAvoidanceTriangle.position = mousePoint;
 }
 
 function onFrame(event) {
     for (var i = 0; i < boids.length; i++) {
         var bi = boids[i];
         var vi = velocities[i];
-
-
-
 
         // for alignment
         var xvel_avg = 0;
@@ -315,16 +323,12 @@ function onFrame(event) {
         if (bi.position.y < yMinMargin) { vi.y += turnFactor }
         if (bi.position.y > yMaxMargin) { vi.y -= turnFactor }
 
-        // hiding beyond the screen edges
-        // if (bi.position.x < xBoxMin || bi.position.x > xBoxMax || bi.position.y < yBoxMin || bi.position.y > yBoxMax) {
-        //     bi.visible = false;
-        // } else {
-        //     bi.visible = true;
-        // }
-        // DEBUG
-        // if (i == 0) {
-        //     visualGroup.position = bi.position;
-        // }
+        // smoothing predator turns
+        var diff = targetAngle - smoothAngle;
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+        smoothAngle += diff * 0.45;
+        mouseAvoidanceTriangle.rotation = smoothAngle;
     }
 }
 
