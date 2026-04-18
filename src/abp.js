@@ -46,24 +46,37 @@ function place_particle_at_location(center) {
 }
 
 function initialize_hex_lattice() {
-    const spacing = 1.1 * sigma * px_per_sigma;
+    const margin = 50;
 
-    const ax = spacing;
-    const ay = Math.sqrt(3) / 2 * spacing;
+    // --- usable domain ---
+    const x_min = x_box_min + margin;
+    const x_max = x_box_max - margin;
+    const y_min = y_box_min + margin;
+    const y_max = y_box_max - margin;
+
+    const width = x_max - x_min;
+    const height = y_max - y_min;
+    const A = width * height;
+
+    // --- spacing from usable area ---
+    const a = Math.sqrt((2 * A) / (Math.sqrt(3) * N_particles));
+
+    const ax = a;
+    const ay = Math.sqrt(3) / 2 * a;
 
     let i = 0;
+    let row = 0;
 
-    for (let row = 0; ; row++) {
-        let y = y_box_min + 50 + row * ay;
-        if (y > y_box_max - 50) break;
+    while (i < N_particles) {
+        let y = y_min + row * ay;
+        if (y > y_max) break;
 
         const x_offset = (row % 2 === 0) ? 0 : ax / 2;
 
-        for (let col = 0; ; col++) {
-            let x = x_box_min + 50 + col * ax + x_offset;
-            if (x > x_box_max - 50) break;
-
-            if (i >= N_particles) return;
+        let col = 0;
+        while (true) {
+            let x = x_min + col * ax + x_offset;
+            if (x > x_max) break;
 
             posX[i] = x;
             posY[i] = y;
@@ -71,16 +84,23 @@ function initialize_hex_lattice() {
             let particle = place_particle_at_location(new Point(x, y));
             particles.push(particle);
 
-            // random orientation (fine)
+            // random orientation
             thetas[i] = 2 * Math.PI * Math.random();
             orientX[i] = Math.cos(thetas[i]);
             orientY[i] = Math.sin(thetas[i]);
 
             i++;
+            if (i >= N_particles) return;
+
+            col++;
         }
+
+        row++;
     }
 
-    console.warn("Box filled before reaching N_particles");
+    if (i < N_particles) {
+        console.warn(`Only placed ${i} particles out of ${N_particles}`);
+    }
 }
 
 /**
@@ -514,7 +534,7 @@ function get_neighbor_indxs(cell_idx) {
 }
 
 // building canvas
-var margin = 50;
+var margin = 20;
 var x_box_min = margin;
 var x_box_max = view.bounds.width - margin;
 var y_box_min = margin;

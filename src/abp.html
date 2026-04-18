@@ -18,6 +18,7 @@
             display: flex;
             flex-direction: column;
             overflow-y: scroll;
+            justify-items: center;
         }
 
         canvas {
@@ -25,6 +26,13 @@
             width: 1000px;
             height: 1000px;
             background-color: #ffffff;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .divider {
@@ -83,8 +91,8 @@
 </head>
 
 <body>
-    <div class="divider"> Active Brownian Particle Sandbox test </div>
-    <canvas id="myCanvas" resize></canvas>
+    <div class="divider"> Active Brownian Particles: Microscopic Traffic Jam </div>
+    <div class="canvas-container"><canvas id="myCanvas" resize></canvas></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
     <script src="./abp.js"></script>
